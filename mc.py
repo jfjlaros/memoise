@@ -6,54 +6,55 @@ import time
 class Cache(object):
     """
     """
-    name = 'test.db'
-    refresh = 2
-    timeout = 5
-
-    def __init__(self, func):
+    def __init__(self, name="test.db", refresh=2, timeout=5):
         """
         """
-        self.func = func
-        self.key = "%s.%s" % (func.__module__, func.func_name)
-        self.cache = shelve.open(self.name)
+        self.cache = shelve.open(name)
+        self.refresh = refresh
+        self.timeout = timeout
     #__init__
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, func):
         """
         """
-        now = int(time.time())
-        refresh = now + self.refresh
-        timeout = now + self.timeout
+        def wrapper(*args, **kwargs):
+            """
+            """
+            now = int(time.time())
+            refresh = now + self.refresh
+            timeout = now + self.timeout
 
-        # Purge timed out entries.
-        for key in self.cache:
-            if self.cache[key][0] < now or self.cache[key][1] < now:
-                del self.cache[key]
+            # Purge timed out entries.
+            for key in self.cache:
+                if self.cache[key][0] < now or self.cache[key][1] < now:
+                    del self.cache[key]
 
-        # Update the cache.
-        key = self.key + str(args + tuple(sorted(kwargs.items())))
-        if key in self.cache:       # Refresh the entry.
-            entry = self.cache[key] # Use this instead of writeback.
-            entry[0] = refresh
-            self.cache[key] = entry
-        #if
-        else:                       # Add a new entry.
-            print "new"
-            self.cache[key] = [refresh, timeout, self.func(*args, **kwargs)]
-        self.cache.sync()
+            key = "%s.%s%s" % (func.__module__, func.func_name,
+                str(args + tuple(sorted(kwargs.items()))))
+            if key in self.cache:       # Refresh the entry.
+                entry = self.cache[key] # Use this instead of writeback.
+                entry[0] = refresh
+                self.cache[key] = entry
+            #if
+            else:                       # Add a new entry.
+                self.cache[key] = [refresh, timeout, func(*args, **kwargs)]
+            self.cache.sync()
 
-        return self.cache[key][2]
+            return self.cache[key][2]
+        #wrapper
+
+        return wrapper
     #__call__
 #Cache
 
 def f():
     pass
 
-@Cache
+@Cache()
 def add(a, b, x=1, opt=0):
     return a + b + x + opt
 
-@Cache
+@Cache(refresh=3, timeout=10)
 def subst(a, b):
     return a - b
 
