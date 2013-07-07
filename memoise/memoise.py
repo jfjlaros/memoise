@@ -8,9 +8,11 @@ class Cache(object):
 
     - Easy to enable per function via a decorator.
     - The module, function name and the arguments are used as key.
-    - Maximum retention time can be set.
-    - Both timeout and retention time can be altered in the decorator.
+    - The retention time can be altered via the decorator.
     """
+    host = "127.0.0.1"
+    port = "11211"
+
     def __init__(self, timeout=86400):
         """
         Constructor.
@@ -22,7 +24,7 @@ class Cache(object):
         @arg timeout: Timeout for used entries.
         @type timeout: int
         """
-        self.cache = memcache.Client(['127.0.0.1:11211'])
+        self.cache = memcache.Client(["%s:%s" % (self.host, self.port)])
         self.timeout = timeout
     #__init__
 
@@ -37,8 +39,8 @@ class Cache(object):
             """
             Wrapper function that does cache administration.
             """
-            key = ("%s.%s%s" % (func.__module__, func.func_name,
-                str(args + tuple(sorted(kwargs.items()))))).replace(' ', '')
+            key = "%s.%s%s" % (func.__module__, func.func_name,
+                str(args + tuple(sorted(kwargs.items()))).replace(' ', ''))
 
             if not self.cache.get(key):
                 self.cache.add(key, func(*args, **kwargs), time=self.timeout)
