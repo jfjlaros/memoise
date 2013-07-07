@@ -3,12 +3,12 @@
 import shelve
 import time
 
-
 class Cache(object):
     """
     """
     name = 'test.db'
-    timeout = 10
+    refresh = 2
+    timeout = 5
 
     def __init__(self, func):
         """
@@ -21,27 +21,28 @@ class Cache(object):
     def __call__(self, *args, **kwargs):
         """
         """
+        now = int(time.time())
+        refresh = now + self.refresh
+        timeout = now + self.timeout
+
+        # Purge timed out entries.
+        for key in self.cache:
+            if self.cache[key][0] < now or self.cache[key][1] < now:
+                del self.cache[key]
+
+        # Update the cache.
         key = self.key + str(args + tuple(sorted(kwargs.items())))
-        print key
-        #now = int(time.time())
-        #expiration = now + self.timeout
-
-        #for key in self.cache.iterkeys():
-        #    print key
-        #    if self.cache[key][0] < now:
-        #        print self.cache[key][0]
-
-        if not key in self.cache:
+        if key in self.cache:       # Refresh the entry.
+            entry = self.cache[key] # Use this instead of writeback.
+            entry[0] = refresh
+            self.cache[key] = entry
+        #if
+        else:                       # Add a new entry.
             print "new"
-            self.cache[key] = self.func(*args, **kwargs)
-            self.cache.sync()
-            #self.cache[key] = [expiration, self.func(*args, **kwargs)]
-        #else:
-        #    print "update"
-        #    self.cache[key][0] = expiration
+            self.cache[key] = [refresh, timeout, self.func(*args, **kwargs)]
+        self.cache.sync()
 
-        print "cache"
-        return self.cache[key]
+        return self.cache[key][2]
     #__call__
 #Cache
 
