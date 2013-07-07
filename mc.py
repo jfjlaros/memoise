@@ -5,6 +5,14 @@ import time
 
 class Cache(object):
     """
+    Memoisation method with the following properties:
+
+    - Easy to enable per function via a decorator.
+    - The module, function name and the arguments are used as key.
+    - Timeout based on last use.
+    - Maximum retention time, independent of last use.
+    - Both timeout and retention time can be altered in the decorator.
+    - The cache is synchronised to a file on disk (shelve).
     """
     def __init__(self, name="test.db", refresh=2, timeout=5):
         """
