@@ -8,6 +8,14 @@ class Cache(object):
     """
     def __init__(self, name="test.db", refresh=2, timeout=5):
         """
+        Constructor.
+
+        @arg name: File name of the persistent object database.
+        @type name: str
+        @arg refresh: Timeout for unused entries.
+        @type refresh: int
+        @arg timeout: Timeout for used entries.
+        @type timeout: int
         """
         self.cache = shelve.open(name)
         self.refresh = refresh
@@ -16,9 +24,14 @@ class Cache(object):
 
     def __call__(self, func):
         """
+        Entry point.
+
+        @arg func: A function.
+        @type func: function
         """
         def wrapper(*args, **kwargs):
             """
+            Wrapper function that does cache administration.
             """
             now = int(time.time())
             refresh = now + self.refresh
