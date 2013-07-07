@@ -40,7 +40,7 @@ class Cache(object):
             Wrapper function that does cache administration.
             """
             key = "%s.%s%s" % (func.__module__, func.func_name,
-                str(args + tuple(sorted(kwargs.items()))).replace(' ', ''))
+                str(args + tuple(sorted(kwargs.items()))).encode("hex"))
 
             if not self.cache.get(key):
                 self.cache.add(key, func(*args, **kwargs), time=self.timeout)
