@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import memcache
+import pylibmc
 
 class Cache(object):
     """
@@ -13,7 +13,7 @@ class Cache(object):
     host = "127.0.0.1"
     port = "11211"
 
-    def __init__(self, timeout=86400):
+    def __init__(self, timeout=86400, ignore=0):
         """
         Constructor.
 
@@ -23,9 +23,12 @@ class Cache(object):
         @type refresh: int
         @arg timeout: Timeout for used entries.
         @type timeout: int
+        @arg ignore: Ignore the first {ignore} amount of variables.
+        @type ignore: int
         """
-        self.cache = memcache.Client(["%s:%s" % (self.host, self.port)])
+        self.cache = pylibmc.Client(["%s:%s" % (self.host, self.port)])
         self.timeout = timeout
+        self.ignore = ignore
     #__init__
 
     def __call__(self, func):
@@ -40,7 +43,8 @@ class Cache(object):
             Wrapper function that does cache administration.
             """
             key = ("%s.%s%s" % (func.__module__, func.func_name,
-                str(args + tuple(sorted(kwargs.items()))))).encode("hex")
+                str(args[self.ignore:] +
+                tuple(sorted(kwargs.items()))))).encode("hex")
 
             if not self.cache.get(key):
                 self.cache.add(key, func(*args, **kwargs), time=self.timeout)
