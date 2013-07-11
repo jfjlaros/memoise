@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import pylibmc
-import pickle
 
 class Cache(object):
     """
@@ -14,7 +13,7 @@ class Cache(object):
     host = "127.0.0.1"
     port = "11211"
 
-    def __init__(self, timeout=86400):
+    def __init__(self, timeout=86400, ignore=[], key=""):
         """
         Constructor.
 
@@ -24,9 +23,15 @@ class Cache(object):
         @type refresh: int
         @arg timeout: Timeout for used entries.
         @type timeout: int
+        @arg ignore: List of positions of parameters and keywords to ignore.
+        @type ignore: list
+        @arg key: Prefix for generating the key.
+        @type key: str
         """
         self.cache = pylibmc.Client(["%s:%s" % (self.host, self.port)])
         self.timeout = timeout
+        self.ignore = ignore
+        self.key = key
     #__init__
 
     def __call__(self, func):
@@ -40,13 +45,33 @@ class Cache(object):
             """
             Wrapper function that does cache administration.
             """
-            key = "%s.%s.%s" % (func.__module__, func.__name__, pickle.dumps(
-                args + tuple(sorted(kwargs.items()))).encode("hex"))
+            ignored_args = []
+            other_args = []
 
-            if not self.cache.get(key):
-                self.cache.add(key, func(*args, **kwargs), time=self.timeout)
+            for i in range(len(args)):
+                if i in self.ignore:
+                    ignored_args.append(type(args[i]).__name__)
+                else:
+                    other_args.append((type(args[i]).__name__, args[i]))
+            #for
+            for i in sorted(kwargs.items()):
+                if i[0] in self.ignore:
+                    ignored_args.append((type(i[1]).__name__, i[0]))
+                else:
+                    other_args.append((type(i[1]).__name__, i[0], i[1]))
+            #for
 
-            return self.cache.get(key)
+            key = ("%s_%s.%s%s" % (self.key, func.__module__, func.func_name,
+                str(tuple(ignored_args + other_args)))).encode("hex")
+
+            result = self.cache.get(key)
+            if not result:
+                result = func(*args, **kwargs)
+
+                self.cache.add(key, result, time=self.timeout)
+            #if
+
+            return result
         #wrapper
 
         return wrapper
