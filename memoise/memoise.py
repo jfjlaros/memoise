@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import pylibmc
+import pickle
 
 class Cache(object):
     """
@@ -42,9 +43,18 @@ class Cache(object):
             """
             Wrapper function that does cache administration.
             """
+            i_args = map(lambda x: type(x).__name__, args[:self.ignore])
+            o_args = map(lambda x: (type(x).__name__, x), args[self.ignore:])
+            k_args = map(lambda x: (type(x[1]).__name__, x[0], x[1]),
+                sorted(kwargs.items()))
+
             key = ("%s.%s%s" % (func.__module__, func.func_name,
                 str(args[self.ignore:] +
                 tuple(sorted(kwargs.items()))))).encode("hex")
+            print key.decode("hex")
+
+            print i_args + o_args + k_args
+            print pickle.dumps(args[0])
 
             if not self.cache.get(key):
                 self.cache.add(key, func(*args, **kwargs), time=self.timeout)
