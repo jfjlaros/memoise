@@ -13,7 +13,7 @@ class Cache(object):
     host = "127.0.0.1"
     port = "11211"
 
-    def __init__(self, timeout=86400, ignore=[], key=""):
+    def __init__(self, timeout=86400, ignore=[], hash=[], key=""):
         """
         Constructor.
 
@@ -25,12 +25,15 @@ class Cache(object):
         @type timeout: int
         @arg ignore: List of positions of parameters and keywords to ignore.
         @type ignore: list
+        @arg ignore: List of positions of parameters and keywords to hash.
+        @type ignore: list
         @arg key: Prefix for generating the key.
         @type key: str
         """
         self.cache = pylibmc.Client(["%s:%s" % (self.host, self.port)])
         self.timeout = timeout
         self.ignore = ignore
+        self.hash = hash
         self.key = key
     #__init__
 
@@ -49,16 +52,26 @@ class Cache(object):
             other_args = []
 
             for i in range(len(args)):
-                if i in self.ignore:
-                    ignored_args.append(type(args[i]).__name__)
+                if i not in self.ignore:
+                    if i in self.hash:
+                        other_args.append((type(args[i]).__name__,
+                            hash(args[i])))
+                    else:
+                        other_args.append((type(args[i]).__name__, args[i]))
+                #if
                 else:
-                    other_args.append((type(args[i]).__name__, args[i]))
+                    ignored_args.append(type(args[i]).__name__)
             #for
             for i in sorted(kwargs.items()):
-                if i[0] in self.ignore:
-                    ignored_args.append((type(i[1]).__name__, i[0]))
+                if i[0] not in self.ignore:
+                    if i in self.hash:
+                        other_args.append((type(i[1]).__name__, i[0],
+                            hash(i[1])))
+                    else:
+                        other_args.append((type(i[1]).__name__, i[0], i[1]))
+                #if
                 else:
-                    other_args.append((type(i[1]).__name__, i[0], i[1]))
+                    ignored_args.append((type(i[1]).__name__, i[0]))
             #for
 
             key = ("%s_%s.%s%s" % (self.key, func.__module__, func.func_name,
