@@ -12,8 +12,8 @@ following:
 - Configurable retention time of cached results.
 - Per function list of formal parameters to ignore, this can be useful when
   working with references.
-- Per function list of actual parameters to hash, this is useful when working
-  with large values.
+- Per function list of actual parameters to fingerprint, this is useful when
+  working with large values.
 - Results are cached using a key which is calculated from the name of the
   module, the name of the function and the list of actual parameters.
   Optionally, an additional key can be passed when a name clash occurs.
@@ -45,7 +45,7 @@ decorator accepts the following optional arguments:
 
 - `timeout`: Retention time of cached results in seconds.
 - `ignore`: List of formal parameter positions and keywords to ignore.
-- `hash`: List of actual parameter positions and keywords to hash.
+- `fingerprint`: List of actual parameter positions and keywords to fingerprint.
 - `key`: Prefix of the key under which the cached result is stored.
 
 
@@ -62,7 +62,7 @@ def fib(n):
 
 Even for modest inputs, this implementation will be slow because of the
 repeated calculation of the same numbers. To illustrate, calculating `fib(33)`,
-requires 11405773 function calls to be made.
+requires 11,405,773 function calls to be made.
 
 The performance of this can be improved upon by *caching* the results with the
 `@Cache()` decorator as follows:

@@ -2,29 +2,23 @@ import pylibmc
 
 
 class Cache(object):
-    """Memoisation method with the following properties:
-
-    - Easy to enable per function via a decorator.
-    - The module, function name and the arguments are used as key.
-    - The retention time can be altered via the decorator.
+    """Memoisation decorator.
     """
     host = '127.0.0.1'
     port = '11211'
 
-    def __init__(self, timeout=86400, ignore=[], hash=[], key=''):
+    def __init__(self, timeout=86400, ignore=[], fingerprint=[], key=''):
         """Constructor.
 
-        :arg str name: File name of the persistent object database.
-        :arg int refresh: Timeout for unused entries.
         :arg int timeout: Timeout for used entries.
-        :arg list ignore: List of positions of parameters and keywords to ignore.
-        :arg list ignore: List of positions of parameters and keywords to hash.
+        :arg list ignore: List of parameter positions and keywords to ignore.
+        :arg list hash: List of parameter positions and keywords to hash.
         :arg str key: Prefix for generating the key.
         """
         self.cache = pylibmc.Client(['{}:{}'.format(self.host, self.port)])
         self.timeout = timeout
         self.ignore = ignore
-        self.hash = hash
+        self.fingerprint = fingerprint
         self.key = key
 
     def __call__(self, func):
@@ -40,7 +34,7 @@ class Cache(object):
 
             for i in range(len(args)):
                 if i not in self.ignore:
-                    if i in self.hash:
+                    if i in self.fingerprint:
                         other_args.append(
                             (type(args[i]).__name__, hash(args[i])))
                     else:
@@ -50,7 +44,7 @@ class Cache(object):
 
             for i in sorted(kwargs.items()):
                 if i[0] not in self.ignore:
-                    if i in self.hash:
+                    if i in self.fingerprint:
                         other_args.append(
                             (type(i[1]).__name__, i[0], hash(i[1])))
                     else:
