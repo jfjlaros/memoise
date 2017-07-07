@@ -12,7 +12,8 @@ class Cache(object):
 
         :arg int timeout: Timeout for used entries.
         :arg list ignore: List of parameter positions and keywords to ignore.
-        :arg list hash: List of parameter positions and keywords to hash.
+        :arg list fingerprint: List of parameter positions and keywords to
+            fingerprint.
         :arg str key: Prefix for generating the key.
         """
         self.cache = pylibmc.Client(['{}:{}'.format(self.host, self.port)])
