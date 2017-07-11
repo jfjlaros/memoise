@@ -12,11 +12,12 @@ following:
 - Configurable retention time of cached results.
 - Per function list of formal parameters to ignore, this can be useful when
   working with references.
-- Per function list of actual parameters to fingerprint, this is useful when
-  working with large values.
-- Results are cached using a key which is calculated from the name of the
-  module, the name of the function and the list of actual parameters.
-  Optionally, an additional key can be passed when a name clash occurs.
+- Results are cached using a hash of the following information as key:
+  - An optional key.
+  - The name of the module,
+  - The name of the function.
+  - The type and name of every parameter.
+  - The value of non-ignored parameters.
 
 ## Installation
 First install the dependencies:
@@ -45,7 +46,6 @@ decorator accepts the following optional arguments:
 
 - `timeout`: Retention time of cached results in seconds.
 - `ignore`: List of formal parameter positions and keywords to ignore.
-- `fingerprint`: List of actual parameter positions and keywords to fingerprint.
 - `key`: Prefix of the key under which the cached result is stored.
 
 
@@ -77,3 +77,12 @@ def fib(n):
 
 Now only 34 function calls are made, which significantly speeds up the
 calculation.
+
+Parameters can be ignored by using the `ignore` keyword:
+
+```python
+@Cache(ignore=['a', 'd'])
+def f(a, b, c=2, d=3)
+    print a, d
+    return b + c
+```
