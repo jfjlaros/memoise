@@ -8,21 +8,9 @@ Licensed under the MIT license, see the LICENSE file.
 from .memoise import Cache
 
 
-__version_info__ = ('0', '15', '0')
+__version_info__ = ('0', '16', '0')
 
 __version__ = '.'.join(__version_info__)
 __author__ = 'Jeroen F.J. Laros'
 __contact__ = 'jlaros@fixedpoint.nl'
 __homepage__ = 'https://github.com/jfjlaros/memoise'
-
-
-usage = __doc__.split('\n\n\n')
-
-
-def doc_split(func):
-    return func.__doc__.split('\n\n')[0]
-
-
-def version(name):
-    return '{} version {}\n\nAuthor   : {} <{}>\nHomepage : {}'.format(
-        name, __version__, __author__, __contact__, __homepage__)
