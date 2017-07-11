@@ -15,7 +15,7 @@ def inc():
     return inc.x
 
 
-@Cache()
+@Cache(timeout=1)
 def cached_inc():
     """Function with a static variable.
     """
@@ -36,9 +36,15 @@ def f(a, b, c=2, d=3):
     return '{} {} {} {}'.format(a, b, c, d)
 
 
-@Cache(timeout=2)
-def current_time():
-    return time.time()
+class Inc(object):
+    def __init__(self):
+        self.x = 0
+
+    @Cache(ignore=['self'])
+    def inc(self):
+        self.x += 1
+
+        return self.x
 
 
 class TestLibrary(object):
@@ -51,7 +57,7 @@ class TestLibrary(object):
         assert inc() == 2
 
     def test_cached(self):
-        # Normal for a function with a static variable.
+        # Not Normal for a function with a static variable.
         assert cached_inc() == 1
         assert cached_inc() == 1
 
@@ -79,12 +85,16 @@ class TestLibrary(object):
         assert f(0, 1, 2, 3) == '0 1 2 3'
         assert f(0, 1, d=1, c=2) == '0 1 2 3'
 
+    def test_class(self):
+        inc = Inc()
+        assert inc.inc() == inc.inc()
+
     def test_timeout_1(self):
-        g_old = current_time()
+        old = cached_inc()
         time.sleep(0.1)
-        assert g_old == current_time()
+        assert old == cached_inc()
 
     def test_timeout_2(self):
-        g_old = current_time()
-        time.sleep(2.1)
-        assert g_old != current_time()
+        old = cached_inc()
+        time.sleep(1.1)
+        assert old != cached_inc()

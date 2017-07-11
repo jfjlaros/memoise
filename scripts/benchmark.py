@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from memoise.memoise import Cache
 import time
+
+from memoise import Cache
 
 
 def fib(n):
     if n < 2:
         return n
-
     return fib(n - 1) + fib(n - 2)
 
 
@@ -15,7 +15,6 @@ def fib(n):
 def fib_c(n):
     if n < 2:
         return n
-
     return fib_c(n - 1) + fib_c(n - 2)
 
 
@@ -30,4 +29,9 @@ def benchmark(n):
         n, time.time() - start, result)
 
 
-benchmark(33)
+def main():
+    benchmark(33)
+
+
+if __name__ == '__main__':
+    main()
