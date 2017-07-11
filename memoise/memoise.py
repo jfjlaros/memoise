@@ -1,3 +1,5 @@
+import hashlib
+
 import pylibmc
 
 
@@ -12,14 +14,11 @@ class Cache(object):
 
         :arg int timeout: Timeout for used entries.
         :arg list ignore: List of parameter positions and keywords to ignore.
-        :arg list fingerprint: List of parameter positions and keywords to
-            fingerprint.
         :arg str key: Prefix for generating the key.
         """
         self.cache = pylibmc.Client(['{}:{}'.format(self.host, self.port)])
         self.timeout = timeout
         self.ignore = ignore
-        self.fingerprint = fingerprint
         self.key = key
 
     def __call__(self, func):
@@ -30,34 +29,20 @@ class Cache(object):
         def wrapper(*args, **kwargs):
             """Wrapper function that does cache administration.
             """
-            ignored_args = []
-            other_args = []
+            params = dict(zip(func.func_code.co_varnames[:len(args)], args))
+            if func.func_defaults:
+                params.update(dict(zip(
+                    func.func_code.co_varnames[len(args):],
+                    func.func_defaults)))
+            params.update(kwargs)
 
-            for i in range(len(args)):
-                if i not in self.ignore:
-                    if i in self.fingerprint:
-                        other_args.append(
-                            (type(args[i]).__name__, hash(args[i])))
-                    else:
-                        other_args.append((type(args[i]).__name__, args[i]))
-                else:
-                    ignored_args.append(type(args[i]).__name__)
+            key_data = [self.key, func.__module__, func.func_name]
+            for param, value in sorted(params.items()):
+                key_data += [type(value).__name__, param]
+                if param not in self.ignore:
+                    key_data.append(value)
 
-            for i in sorted(kwargs.items()):
-                if i[0] not in self.ignore:
-                    if i in self.fingerprint:
-                        other_args.append(
-                            (type(i[1]).__name__, i[0], hash(i[1])))
-                    else:
-                        other_args.append((type(i[1]).__name__, i[0], i[1]))
-                else:
-                    ignored_args.append((type(i[1]).__name__, i[0]))
-
-            key = (
-                '{}_{}.{}{}'.format(
-                    self.key, func.__module__, func.func_name,
-                    str(tuple(ignored_args + other_args)))
-            ).encode('hex')
+            key = hashlib.md5('__'.join(map(str, key_data))).hexdigest()
 
             result = self.cache.get(key)
             if not result:
@@ -67,3 +52,6 @@ class Cache(object):
             return result
 
         return wrapper
+
+    def flush(self):
+        self.cache.flush_all()
