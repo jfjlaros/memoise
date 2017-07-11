@@ -9,7 +9,7 @@ class Cache(object):
     host = '127.0.0.1'
     port = '11211'
 
-    def __init__(self, timeout=86400, ignore=[], fingerprint=[], key=''):
+    def __init__(self, timeout=86400, ignore=[], key=''):
         """Constructor.
 
         :arg int timeout: Timeout for used entries.
