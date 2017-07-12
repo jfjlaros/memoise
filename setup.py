@@ -34,7 +34,7 @@ long_description = 'See ' + distmeta['__homepage__']
 
 setup(
     name='memoise',
-    version=distmeta['__version__'],
+    version=distmeta['__version_info__'],
     description='Memoise decorator.',
     long_description=long_description,
     author=distmeta['__author__'],
