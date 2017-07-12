@@ -3,6 +3,7 @@
 import time
 
 from memoise import Cache
+from memoise.memoise import _get_params
 
 
 def inc():
@@ -15,7 +16,7 @@ def inc():
     return inc.x
 
 
-@Cache(timeout=1)
+@Cache(timeout=2)
 def cached_inc():
     """Function with a static variable.
     """
@@ -34,6 +35,10 @@ def add(a, b):
 @Cache(ignore=['a', 'd'])
 def f(a, b, c=2, d=3):
     return '{} {} {} {}'.format(a, b, c, d)
+
+
+def g(a, b, c=2, d=3):
+    pass
 
 
 class Inc(object):
@@ -62,15 +67,31 @@ class TestLibrary(object):
         assert cached_inc() == 1
 
     def test_kwargs_1(self):
-        assert f(0, 1) == '0 1 2 3'
+        assert _get_params(g, *[0, 1], **{'c': 2, 'd': 3}) == {
+            'a': 0, 'b': 1, 'c': 2, 'd': 3}
 
     def test_kwargs_2(self):
-        assert f(0, 1, 2, 3) == '0 1 2 3'
+        assert _get_params(g, *[0], **{'b': 1, 'c': 2, 'd': 3}) == {
+            'a': 0, 'b': 1, 'c': 2, 'd': 3}
 
     def test_kwargs_3(self):
-        assert f(0, 1, d=3, c=2) == '0 1 2 3'
+        assert _get_params(g, *[0], **{'b': 1, 'd': 3}) == {
+            'a': 0, 'b': 1, 'c': 2, 'd': 3}
 
     def test_kwargs_4(self):
+        assert _get_params(g, *[0], **{'b': 1}) == {
+            'a': 0, 'b': 1, 'c': 2, 'd': 3}
+
+    def test_cached_kwargs_1(self):
+        assert f(0, 1) == '0 1 2 3'
+
+    def test_cached_kwargs_2(self):
+        assert f(0, 1, 2, 3) == '0 1 2 3'
+
+    def test_cached_kwargs_3(self):
+        assert f(0, 1, d=3, c=2) == '0 1 2 3'
+
+    def test_cached_kwargs_4(self):
         assert f(d=3, c=2, b=1, a=0) == '0 1 2 3'
 
     def test_ignore_1(self):
@@ -96,5 +117,5 @@ class TestLibrary(object):
 
     def test_timeout_2(self):
         old = cached_inc()
-        time.sleep(1.1)
+        time.sleep(2.1)
         assert old != cached_inc()
