@@ -8,7 +8,7 @@ Licensed under the MIT license, see the LICENSE file.
 from .memoise import Cache
 
 
-__version_info__ = ('0', '16', '0')
+__version_info__ = ('0', '16', '1')
 
 __version__ = '.'.join(__version_info__)
 __author__ = 'Jeroen F.J. Laros'
